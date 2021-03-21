@@ -6,7 +6,7 @@
 
 function HW07_omg6429_sxp8350()
     %HW07_omg6429_sxp8350_MAIN();
-    find_dice('img_6869__ones.jpg');
+    find_dice('img_7020__change_in_shadows.jpg');
     
 end
 
@@ -105,7 +105,7 @@ function find_dice(img_name)
     fprintf("Number of 5's:\t\t%d\n", numbers_on_dice(5));
     fprintf("Number of 6's:\t\t%d\n", numbers_on_dice(6));
     fprintf("Number of Unknown:\t%d\n", numbers_on_dice(7));
-    fprintf("Total of all dots:\t%d\n", 
+    fprintf("Total of all dots:\t%d\n",sum(numbers_on_dice(1:6)));
     
     %finish the final display
     title('Final Image');
