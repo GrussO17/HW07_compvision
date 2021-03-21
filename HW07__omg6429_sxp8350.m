@@ -6,7 +6,7 @@
 
 function HW07_omg6429_sxp8350()
     %HW07_omg6429_sxp8350_MAIN();
-    find_dice('img_7020__change_in_shadows.jpg');
+    find_dice('img_7061__touching.jpg');
     
 end
 
@@ -47,20 +47,43 @@ function find_dice(img_name)
     
     %erode the image to remove as many white specs from the background and
     %dots as possible
-    open_filter = [1 1 1 1; 1 1 1 1; 1 1 1 1; 1 1 1 1];
-    im_foreground = imerode(im_foreground, open_filter);
+    erosion_filter = [1 1 1 1; 1 1 1 1; 1 1 1 1; 1 1 1 1];
+    im_foreground = imerode(im_foreground, erosion_filter);
+    
+ 
+    %this is the edge detector, it uses pause so you will have to press
+    %something to move on
+    se = strel('square',20);
+    im_background = ~im_foreground;
+    [back_parts, back_num_parts] =  bwlabel(im_background, 8);
+    for count = 1 : back_num_parts
+        part = back_parts == count;
+        props = regionprops(part);
+        if props.Area > 10000
+            edges = edge(part, 'canny', [.1 .3]);
+            %dilate the edges
+            edges = imdilate(edges, se);
+            imshow(edges);
+        end
+    end
+    disp('it is paused');
+    pause;
+    
     
     %imshow(im_foreground);
     current_figure = figure;
     hold on;
     
+    
     %find the dice
     [parts, num_parts] = bwlabel(im_foreground, 8);
     disp (num_parts);
     
+    
     %track the results
     number_of_dice = 0;
     numbers_on_dice = [0 0 0 0 0 0 0];
+    sum_of_all_dots = 0;
     
     %loop through the white regions (dice)
     for count = 1 : num_parts
@@ -87,6 +110,7 @@ function find_dice(img_name)
             %imshow(part);            
             number_of_dice = number_of_dice + 1;
             num_dots = count_dots_on_dice(part);
+            sum_of_all_dots = sum_of_all_dots + num_dots;
             if (num_dots > 0 && num_dots < 7)
                 numbers_on_dice(num_dots) = numbers_on_dice(num_dots) + 1;
             else
@@ -105,7 +129,7 @@ function find_dice(img_name)
     fprintf("Number of 5's:\t\t%d\n", numbers_on_dice(5));
     fprintf("Number of 6's:\t\t%d\n", numbers_on_dice(6));
     fprintf("Number of Unknown:\t%d\n", numbers_on_dice(7));
-    fprintf("Total of all dots:\t%d\n",sum(numbers_on_dice(1:6)));
+    fprintf("Total of all dots:\t%d\n", sum_of_all_dots);
     
     %finish the final display
     title('Final Image');
