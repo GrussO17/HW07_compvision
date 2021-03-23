@@ -13,7 +13,7 @@ end
 %Main function that calls find dice on every image in the same directory as
 %itself.
 function HW07_omg6429_sxp8350_MAIN()
-    addpath('..\TEST_IMAGES');
+    addpath('../TEST_IMAGES');
     files = show_all_files_in_dir();
     for counter = 1 : length(files)
         find_dice(files(counter).name);
