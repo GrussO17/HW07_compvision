@@ -5,31 +5,35 @@
 %   Paul Suwamik sxp8350
 
 function HW07_omg6429_sxp8350()
-    %HW07_omg6429_sxp8350_MAIN();
-    find_dice('img_7061__touching.jpg');
+    HW07_omg6429_sxp8350_MAIN();
+    %find_dice('img_7061__touching.jpg');
     
 end
 
-
+%Main function that calls find dice on every image in the same directory as
+%itself.
 function HW07_omg6429_sxp8350_MAIN()
     addpath('..\TEST_IMAGES');
     files = show_all_files_in_dir();
     for counter = 1 : length(files)
-        find_dice(files(counter));
+        find_dice(files(counter).name);
     end
 end
 
-
+%Find all of the images in the current directory or test images.
 function file_list = show_all_files_in_dir()
     file_list = dir('*.jpg');
     for counter = 1 : length( file_list )
         fn = file_list(counter).name;
-        fprintf('file %3d = %s\n', counter, fn);
     end
 end
 
 
-
+% finds dice in the given image, then calls subroutine that finds the dots
+% on each dice.
+%
+% params:
+%   img_name - the name of the image to analyze
 function find_dice(img_name)
     im_original = imread(img_name);
     
@@ -42,32 +46,13 @@ function find_dice(img_name)
     %get the red channel
     im_red = im_original(:,:,1);
  
-    %threshold the dice
-    im_foreground = im_red(:,:) > 200;
+    %threshold the dice using the red channel to include the red writing
+    im_foreground = im_red(:,:) > 180;
     
     %erode the image to remove as many white specs from the background and
     %dots as possible
-    erosion_filter = [1 1 1 1; 1 1 1 1; 1 1 1 1; 1 1 1 1];
+    erosion_filter = [1 1 1 ; 1 1 1 ; 1 1 1 ];
     im_foreground = imerode(im_foreground, erosion_filter);
-    
- 
-    %this is the edge detector, it uses pause so you will have to press
-    %something to move on
-    se = strel('square',20);
-    im_background = ~im_foreground;
-    [back_parts, back_num_parts] =  bwlabel(im_background, 8);
-    for count = 1 : back_num_parts
-        part = back_parts == count;
-        props = regionprops(part);
-        if props.Area > 10000
-            edges = edge(part, 'canny', [.1 .3]);
-            %dilate the edges
-            edges = imdilate(edges, se);
-            imshow(edges);
-        end
-    end
-    disp('it is paused');
-    pause;
     
     
     %imshow(im_foreground);
@@ -75,9 +60,8 @@ function find_dice(img_name)
     hold on;
     
     
-    %find the dice
+    %seperate the white dice from the black bakgound
     [parts, num_parts] = bwlabel(im_foreground, 8);
-    disp (num_parts);
     
     
     %track the results
@@ -91,7 +75,7 @@ function find_dice(img_name)
         props = regionprops(part);
         
         %check if the area is actually a die
-        if props.Area > 500
+        if props.Area > 500 && props.Area < 300000
             %Plot box on the figure
             xs = [props.BoundingBox(1), props.BoundingBox(1), ...
                   props.BoundingBox(1) + props.BoundingBox(3), ...
@@ -106,8 +90,8 @@ function find_dice(img_name)
             plot (xs, ys, 'Color', [0, 1, 0] , 'LineWidth', 2);
             
         
-            %calculate the number of dots on this die.
-            %imshow(part);            
+            %save the number of dice in the list, if there are more than 6
+            %dots put it in the unkown section.
             number_of_dice = number_of_dice + 1;
             num_dots = count_dots_on_dice(part);
             sum_of_all_dots = sum_of_all_dots + num_dots;
@@ -136,13 +120,22 @@ function find_dice(img_name)
     set(gca, 'ydir', 'reverse')
     info = imagesc(im_original);
     uistack(info, 'down', number_of_dice);
+    drawnow;
     
 end
 
+%
+% Finds all of the dots on a single die, given a BW image
+%
+% params:
+%   dice_img - a black and white image with a single dice
+% params:
+%   num_dots - the total number of dots on the dice
 function num_dots = count_dots_on_dice(dice_img)
-
     %input is white dice on black background, make dots white
     im_dots = ~dice_img;
+    
+    %use bwlabel to seperate the dots from the dice
     [parts, num_parts] = bwlabel(im_dots, 8);
     
     %loop through the black regions
@@ -150,11 +143,10 @@ function num_dots = count_dots_on_dice(dice_img)
     for count = 1 : num_parts
         part = parts == count;
         props = regionprops(part);
-        %disp(props.Area);
         
         %check if the region is a dot, excludes blemishes and the
         %background
-        if (props.Area < 10000 && props.Area > 500)
+        if (props.Area < 10000 && props.Area > 1500)
             num_dots = num_dots + 1;
         end
     end    
